@@ -1,0 +1,5 @@
+---
+dependencies: []
+collections:
+  - ansible.posix
+  - community.general

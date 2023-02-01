@@ -1,0 +1,4 @@
+---
+users_sshd:
+  name: ssh
+  config_path: /etc/ssh/sshd_config

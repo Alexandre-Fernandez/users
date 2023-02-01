@@ -1,0 +1,47 @@
+---
+- name: Check users.
+  fail:
+    msg: Atleast one user must be present.
+  when: users_present_users | length == 0
+
+- name: Add users.
+  become: true
+  user:
+    name: "{{ item.name }}"
+    password: "{{ item.password | password_hash('sha512', users_salt) }}"
+    update_password: always
+    state: present
+  with_items: "{{ users_present_users }}"
+  no_log: true
+
+- name: Add sudo rights.
+  become: true
+  community.general.sudoers:
+    name: "{{ item.name }}"
+    user: "{{ item.name }}"
+    nopassword: "{{ item.is_passwordless | default(false) }}"
+    runas: ALL
+    commands: ALL
+  when: item.is_sudo | default(false)
+  with_items: "{{ users_present_users }}"
+  no_log: true
+
+- name: Authorize ssh-keys.
+  become: true
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ lookup('file', item.public_key) }}"
+    state: present
+  with_items: "{{ users_present_users }}"
+  no_log: true
+
+- name: Test ssh connections.
+  local_action:
+    module: shell
+    cmd: "ssh -o PubkeyAuthentication=yes -o PasswordAuthentication=no -p {{ ansible_port | default(22) }} -i {{ item.private_key }} {{ item.name }}@{{ inventory_hostname }} 'echo success'"
+  when: item.private_key is defined
+  with_items: "{{ users_present_users }}"
+  register: result
+  changed_when: false
+  failed_when: result.stdout != "success"
+  no_log: true

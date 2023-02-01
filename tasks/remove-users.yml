@@ -1,0 +1,30 @@
+---
+- name: Unauthorize ssh-keys.
+  become: true
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ lookup('file', item.public_key) }}"
+    state: absent
+  when: item.public_key is defined
+  with_items: "{{ users_absent_users }}"
+  no_log: true
+
+- name: Remove sudo rights.
+  become: true
+  community.general.sudoers:
+    name: "{{ item.name }}"
+    user: "{{ item.name }}"
+    nopassword: "{{ item.is_passwordless | default(false) }}"
+    runas: ALL
+    commands: ALL
+    state: absent
+  with_items: "{{ users_absent_users }}"
+  no_log: true
+
+- name: Remove users.
+  become: true
+  user:
+    name: "{{ item.name }}"
+    state: absent
+  with_items: "{{ users_absent_users }}"
+  no_log: true
