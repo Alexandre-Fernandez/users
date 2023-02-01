@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  author: alexandre-fernandez
+  author: alexandre_fernandez
   description: User management role.
   license: MIT
   min_ansible_version: "2.1"
