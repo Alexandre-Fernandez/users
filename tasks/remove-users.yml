@@ -1,6 +1,5 @@
 ---
-- name: Determine existing users
-  shell: 'grep ansible /etc/group | cut -d: -f4 | tr "," "\n"'
+- shell: 'grep ansible /etc/group | cut -d: -f4 | tr "," "\n"'
   changed_when: false
   register: existing_users
 
