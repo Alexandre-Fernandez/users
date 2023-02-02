@@ -1,30 +1,23 @@
 ---
-- name: Unauthorize ssh-keys.
-  become: true
-  ansible.posix.authorized_key:
-    user: "{{ item.name }}"
-    key: "{{ lookup('file', item.public_key) }}"
-    state: absent
-  when: item.public_key is defined
-  with_items: "{{ users_absent_users }}"
-  no_log: true
+- name: Determine existing users
+  shell: 'grep ansible /etc/group | cut -d: -f4 | tr "," "\n"'
+  changed_when: false
+  register: existing_users
 
-- name: Remove sudo rights.
-  become: true
-  community.general.sudoers:
-    name: "{{ item.name }}"
-    user: "{{ item.name }}"
-    nopassword: "{{ item.is_passwordless | default(false) }}"
-    runas: ALL
-    commands: ALL
-    state: absent
-  with_items: "{{ users_absent_users }}"
-  no_log: true
+- set_fact:
+    users_absent_names: "{{ existing_users.stdout_lines | difference(users_present_users | map(attribute='name')) }}"
 
 - name: Remove users.
   become: true
   user:
-    name: "{{ item.name }}"
+    name: "{{ item }}"
+    remove: true
     state: absent
-  with_items: "{{ users_absent_users }}"
-  no_log: true
+  with_items: "{{ users_absent_names }}"
+
+- name: Remove sudo rights.
+  become: true
+  file:
+    path: "/etc/sudoers.d/{{ users_absent_names }}"
+    state: absent
+  with_items: "{{ users_absent_names }}"

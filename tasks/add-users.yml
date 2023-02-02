@@ -4,6 +4,11 @@
     msg: Atleast one user must be present.
   when: users_present_users | length == 0
 
+- name: Create ansible group.
+  group:
+    name: ansible
+    state: present
+
 - name: Add users.
   become: true
   user:
@@ -11,6 +16,8 @@
     password: "{{ item.password | password_hash('sha512', users_salt) }}"
     update_password: always
     state: present
+    groups:
+      - ansible # added in /etc/group
   with_items: "{{ users_present_users }}"
   no_log: true
 
