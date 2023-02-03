@@ -1,3 +1,2 @@
 users_salt: salt
-users_absent_users: []
 users_present_users: []
